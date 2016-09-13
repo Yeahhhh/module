@@ -164,8 +164,8 @@ void PrintCudaDeviceProp(const cudaDeviceProp *const prop, const int d)
 
     // ratio
     printf("\n");
-    printf("FP32 FLOPS/BW ratio \t\t%.2f\n", 4 * chip_fp32_flops / chip_bw_Bps);
-    printf("FP64 FLOPS/BW ratio \t\t%.2f\n", 8 * chip_fp64_flops / chip_bw_Bps);
+    printf("FP32 FLOPS/memory BW ratio \t%.2f\n", 4 * chip_fp32_flops / chip_bw_Bps);
+    printf("FP64 FLOPS/memory BW ratio \t%.2f\n", 8 * chip_fp64_flops / chip_bw_Bps);
     printf("num reg32/num FP32 unit ratio \t%.2f\n", (float)prop->regsPerMultiprocessor / fp32units_per_mp);
     printf("num reg64/num FP64 unit ratio \t%.2f\n", (float)prop->regsPerMultiprocessor / 2 / fp64units_per_mp);
 
