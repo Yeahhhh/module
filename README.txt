@@ -1,3 +1,9 @@
+libraries that I frequently use in Linux X86_64
+
+
+
+
+
 Build this library package:
     cd module/yeah
     vi GNUmakefile
@@ -6,15 +12,17 @@ Build this library package:
 
 
 
+
 Use this library package:
 
-Method 1:
+Method 1 (prefered):
+    source PATH/TO/module/sourceme.bash   # Import environment variables in Bash
+    cc -c a.c
+    cc a.o -lyeahc
+
+Method 2:
     put the entire package ("module") under your project
     cc -I./module -c a.c
     cc a.o -L./module/lib -lyeahc
 
-Method 2:
-    source PATH/TO/module/sourceme.bash   # Import environment variables using Bash
-    cc -c a.c
-    cc a.o -lyeahc
 
