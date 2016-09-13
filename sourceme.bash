@@ -16,6 +16,9 @@ if [ -d $APPROOT ]; then
 
     export LIBRARY_PATH=$APPROOT/lib:$LIBRARY_PATH
     export LD_LIBRARY_PATH=$APPROOT/lib:$LD_LIBRARY_PATH
+
+
+    #. $APPROOT/brendangregg/sourceme.bash
 fi
 
 unset APPROOT
