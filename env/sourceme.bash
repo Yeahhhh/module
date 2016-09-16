@@ -2,6 +2,7 @@
 APPROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 #echo $APPROOT
 
+APPROOT=$APPROOT/..
 
 if [ -d $APPROOT ]; then
     export CPATH=$APPROOT:$CPATH
