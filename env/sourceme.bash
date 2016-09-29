@@ -5,7 +5,8 @@ APPROOT=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 APPROOT=$APPROOT/..
 
 if [ -d $APPROOT ]; then
-    export PATH=$APPROOT/yeah/script:$PATH
+    export PATH=$APPROOT/bin:$PATH
+
     export CPATH=$APPROOT:$CPATH
 
     export C_INCLUDE_PATH=$APPROOT:$C_INCLUDE_PATH
