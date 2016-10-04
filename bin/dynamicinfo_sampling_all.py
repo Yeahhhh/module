@@ -34,16 +34,21 @@ import numpy
 MAX_CPU_FIELDS = 12
 MAX_CPU_CORE = 300
 MAX_NET_FIELDS = 20
-MAX_NET_DEV = 8
+MAX_NET_DEV = 16
 MAX_DISK_FIELDS = 16
 MAX_DISK_DEV = 64
+SAMPLING_FREQUENCY = 2.0
+SAMPLING_INTERVAL = 1 / SAMPLING_FREQUENCY
 
 time_epoch = datetime.datetime.utcfromtimestamp(0)
 hostname = socket.gethostname()
 output_format = "stdout"  # stdout, influxdb
 cpu_vals_old = numpy.zeros((MAX_CPU_CORE, MAX_CPU_FIELDS))
+#cpu_names = []
 net_dev_vals_old = numpy.zeros((MAX_NET_DEV, MAX_NET_FIELDS))
+net_dev_names = []
 disk_vals_old = numpy.zeros((MAX_DISK_DEV, MAX_DISK_FIELDS))
+disk_names = []
 
 
 
@@ -116,6 +121,26 @@ def proc_stat_cpu(line, idx):
 
 
 
+def proc_stat_init():
+    lines = []
+    with open("/proc/stat") as f:
+        lines = f.readlines()
+
+    idx = 0
+    for line in lines:
+        idx += 1
+        words = line.split()
+        words_n = len(words)
+        key = words[0]
+
+        if (key == "cpu"): # all CPU
+            for i in range(1, words_n):
+                cpu_vals_old[idx][i] = float(words[i])
+
+
+
+
+
 
 # processor, process
 # man proc "/proc/stat"
@@ -149,6 +174,7 @@ def proc_stat():
     return d
 
 
+
 def proc_meminfo():
     lines = [] # list
     d = {} # dictionary
@@ -156,8 +182,8 @@ def proc_meminfo():
     with open("/proc/meminfo") as f:
         lines = f.readlines()
     for line in lines:
-        words = line.split()
-        key = "meminfo_" + words[0][:-1]
+        words = line.replace(":", " ").split()
+        key = "meminfo_" + words[0]
         val = float(words[1]) / 1000.0  # in MB
         d[key] = val
 
@@ -189,6 +215,30 @@ def proc_vmstat():
     return d
 
 
+
+
+
+def proc_net_dev_init():
+    lines = []
+    with open("/proc/net/dev") as f:
+        lines = f.readlines()
+
+    idx = 0
+    for line in lines[2:]: # line 2-3
+        idx += 1
+
+        words = line.replace(":", " ").split()
+        words_n = len(words)
+        device = words[0]
+        net_dev_names.append(device)
+
+        for i in range(1, words_n):
+            net_dev_vals_old[idx][i] = float(words[i])
+
+
+
+
+
 def proc_net_dev():
     lines = [] # list
     d = {} # dictionary
@@ -197,14 +247,13 @@ def proc_net_dev():
         lines = f.readlines()
 
     idx = 0
-    #for line in lines[3:4]: # line 2-3
     for line in lines[2:]: # line 2-3
         idx += 1
 
-        words = line.split()
+        words = line.replace(":", " ").split()
         words_n = len(words)
         vals = [0.0] * words_n
-        device = words[0][:-1]
+        device = words[0]
 
         #print(idx)
         #print(device)
@@ -225,17 +274,41 @@ def proc_net_dev():
         #print("record")
         #print("")
 
-        d["net_dev_%s_%s" % (device, "rx_bytes")] = vals[1]
-        d["net_dev_%s_%s" % (device, "rx_packets")] = vals[2]
-        d["net_dev_%s_%s" % (device, "rx_errs")] = vals[3]
-        d["net_dev_%s_%s" % (device, "rx_drops")] = vals[4]
-        d["net_dev_%s_%s" % (device, "tx_bytes")] = vals[9]
-        d["net_dev_%s_%s" % (device, "tx_packets")] = vals[10]
-        d["net_dev_%s_%s" % (device, "tx_errs")] = vals[11]
-        d["net_dev_%s_%s" % (device, "tx_drops")] = vals[12]
+        # receive, incoming
+        d["net_dev_%s_%s" % (device, "rx_kbytes")] = vals[1] * SAMPLING_FREQUENCY / 1000.0
+        d["net_dev_%s_%s" % (device, "rx_packets")] = vals[2] * SAMPLING_FREQUENCY
+        d["net_dev_%s_%s" % (device, "rx_errs")] = vals[3] * SAMPLING_FREQUENCY
+        d["net_dev_%s_%s" % (device, "rx_drops")] = vals[4] * SAMPLING_FREQUENCY
+        # transmit, send, outgoing
+        d["net_dev_%s_%s" % (device, "tx_kbytes")] = vals[9] * SAMPLING_FREQUENCY / 1000.0
+        d["net_dev_%s_%s" % (device, "tx_packets")] = vals[10] * SAMPLING_FREQUENCY
+        d["net_dev_%s_%s" % (device, "tx_errs")] = vals[11] * SAMPLING_FREQUENCY
+        d["net_dev_%s_%s" % (device, "tx_drops")] = vals[12] * SAMPLING_FREQUENCY
 
     #print_dict(d)
     return d
+
+
+
+
+def proc_diskstats_init():
+    lines = []
+    with open("/proc/diskstats") as f:
+        lines = f.readlines()
+
+    idx = 0
+    for line in lines:
+        idx += 1
+
+        words = line.split()
+        words_n = len(words)
+        device = words[2]
+        disk_names.append(device)
+
+        if (words[0] == '8'):
+            for i in range(3, words_n):
+                disk_vals_old[idx][i] = float(words[i])
+
 
 
 
@@ -261,20 +334,30 @@ def proc_diskstats():
                 disk_vals_old[idx][i] = a
                 vals[i] = delta
 
-            d["diskstats_%s_%s" % (device, "reads_completed_successfully")] = vals[3]
-            d["diskstats_%s_%s" % (device, "reads_merged")] = vals[4]
-            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[5]
+            d["diskstats_%s_%s" % (device, "reads_completed_successfully")] = vals[3] * SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "reads_merged")] = vals[4] * SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[5] * SAMPLING_FREQUENCY
             d["diskstats_%s_%s" % (device, "time_on_reading")] = vals[6] # ms
-            d["diskstats_%s_%s" % (device, "writes_completed")] = vals[7]
-            d["diskstats_%s_%s" % (device, "writes_merged")] = vals[8]
-            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[9]
+            d["diskstats_%s_%s" % (device, "writes_completed")] = vals[7] * SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "writes_merged")] = vals[8] * SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[9] * SAMPLING_FREQUENCY
             d["diskstats_%s_%s" % (device, "time_on_writing")] = vals[10] # ms
-            d["diskstats_%s_%s" % (device, "io_progress")] = vals[11]
+            d["diskstats_%s_%s" % (device, "io_progress")] = vals[11]* SAMPLING_FREQUENCY
             d["diskstats_%s_%s" % (device, "time_on_io")] = vals[12] # ms
             d["diskstats_%s_%s" % (device, "weighted_time_on_io")] = vals[12] # ms
 
     #print_dict(d)
     return d
+
+
+
+def init():
+    proc_stat_init()
+    proc_net_dev_init()
+    proc_diskstats_init()
+
+
+
 
 
 
@@ -303,6 +386,7 @@ def format_influxdb(d, keys):
     line += "time_tag=%s " % epoch_to_myformat(int(t))
     line += "%d" % (int(t * 1000.0) * 1000000)
     return line
+
 
 def my_print(d, keys):
     line = format_stdout(d,keys)
@@ -377,24 +461,6 @@ def sampling():
             "meminfo_percent_Cached",
             "meminfo_percent_Buffers",
 
-            "net_dev_lo_rx_bytes",
-            "net_dev_lo_rx_packets",
-            #"net_dev_lo_rx_errs",
-            #"net_dev_lo_rx_drops",
-            "net_dev_lo_tx_bytes",
-            "net_dev_lo_tx_packets",
-            #"net_dev_lo_tx_errs",
-            #"net_dev_lo_tx_drops",
-
-            "net_dev_eth0_rx_bytes",
-            "net_dev_eth0_rx_packets",
-            #"net_dev_eth0_rx_errs",
-            #"net_dev_eth0_rx_drops",
-            "net_dev_eth0_tx_bytes",
-            "net_dev_eth0_tx_packets",
-            #"net_dev_eth0_tx_errs",
-            #"net_dev_eth0_tx_drops",
-
             "diskstats_sda_reads_completed_successfully",
             "diskstats_sda_reads_merged",
             "diskstats_sda_sectors_read",
@@ -409,6 +475,13 @@ def sampling():
 
             "dummy"
             ]
+
+    #for net_dev_name in ["lo", "eth0"]:
+    for net_dev_name in net_dev_names:
+        keys.append("net_dev_%s_rx_kbytes" % net_dev_name)
+        keys.append("net_dev_%s_tx_kbytes" % net_dev_name)
+
+
     #print_dict(d)
     #print(d.items())
     if (output_format == "stdout"):
@@ -419,29 +492,28 @@ def sampling():
 
 
 def main_stdout():
+    init()
     while 1:
         sample = sampling()
-        time.sleep(0.2) # seconds
+        time.sleep(SAMPLING_INTERVAL) # seconds
 
 
 def main_influxdb():
-    #sampling()
-
-    samples = []
+    init()
     out_fn = "/tmp/a.py.influxdb_request"
 
     while 1:
+        samples = []
         for i in range(0, 100):
             sample = sampling()
             samples.append(sample)
-            time.sleep(0.1) # seconds
+            time.sleep(SAMPLING_INTERVAL) # seconds
 
+        #print(samples)
         samples = "\n".join(samples)
         with open(out_fn, "w") as f:
             f.write(samples)
         send_file_to_influxdb(out_fn)
-        samples = []
-
 
 
 
@@ -456,13 +528,24 @@ if __name__ == "__main__":
         type = str,
         help = "stdout / influxdb"
         )
+    #parser.add_argument(
+    #    "-f",
+    #    "--freq",
+    #    default = "2",
+    #    type = int,
+    #    help = "sampling frequency"
+    #    )
     args = parser.parse_args()
+    output_format = args.mod
+    #global SAMPLING_FREQUENCY
+    #global SAMPLING_INTERNAL
+    #SAMPLING_FREQUENCY = float(args.freq)
+    #SAMPLING_INTERNAL = 1 / SAMPLING_FREQUENCY
 
     if (len(sys.argv[1:]) == 0):
         output_format = "stdout"
         main_stdout()
     else:
-        output_format = args.mod
         if (output_format == "stdout"):
             main_stdout()
         elif (output_format == "influxdb"):
