@@ -38,7 +38,7 @@ MAX_NET_DEV = 16
 MAX_DISK_FIELDS = 16
 MAX_DISK_DEV = 64
 
-sampling_frequency = 2.0
+sampling_frequency = 10.0
 sampling_interval = 1 / sampling_frequency
 time_epoch = datetime.datetime.utcfromtimestamp(0)
 hostname = socket.gethostname()
@@ -481,6 +481,8 @@ def sampling():
     for net_dev_name in net_dev_names:
         keys.append("net_dev_%s_rx_kbytes" % net_dev_name)
         keys.append("net_dev_%s_tx_kbytes" % net_dev_name)
+        keys.append("net_dev_%s_rx_packets" % net_dev_name)
+        keys.append("net_dev_%s_tx_packets" % net_dev_name)
 
 
     #print_dict(d)
