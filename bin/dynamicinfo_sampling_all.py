@@ -37,9 +37,9 @@ MAX_NET_FIELDS = 20
 MAX_NET_DEV = 16
 MAX_DISK_FIELDS = 16
 MAX_DISK_DEV = 64
-SAMPLING_FREQUENCY = 2.0
-SAMPLING_INTERVAL = 1 / SAMPLING_FREQUENCY
 
+sampling_frequency = 2.0
+sampling_interval = 1 / sampling_frequency
 time_epoch = datetime.datetime.utcfromtimestamp(0)
 hostname = socket.gethostname()
 output_format = "stdout"  # stdout, influxdb
@@ -275,15 +275,15 @@ def proc_net_dev():
         #print("")
 
         # receive, incoming
-        d["net_dev_%s_%s" % (device, "rx_kbytes")] = vals[1] * SAMPLING_FREQUENCY / 1000.0
-        d["net_dev_%s_%s" % (device, "rx_packets")] = vals[2] * SAMPLING_FREQUENCY
-        d["net_dev_%s_%s" % (device, "rx_errs")] = vals[3] * SAMPLING_FREQUENCY
-        d["net_dev_%s_%s" % (device, "rx_drops")] = vals[4] * SAMPLING_FREQUENCY
+        d["net_dev_%s_%s" % (device, "rx_kbytes")] = vals[1] * sampling_frequency / 1000.0
+        d["net_dev_%s_%s" % (device, "rx_packets")] = vals[2] * sampling_frequency
+        d["net_dev_%s_%s" % (device, "rx_errs")] = vals[3] * sampling_frequency
+        d["net_dev_%s_%s" % (device, "rx_drops")] = vals[4] * sampling_frequency
         # transmit, send, outgoing
-        d["net_dev_%s_%s" % (device, "tx_kbytes")] = vals[9] * SAMPLING_FREQUENCY / 1000.0
-        d["net_dev_%s_%s" % (device, "tx_packets")] = vals[10] * SAMPLING_FREQUENCY
-        d["net_dev_%s_%s" % (device, "tx_errs")] = vals[11] * SAMPLING_FREQUENCY
-        d["net_dev_%s_%s" % (device, "tx_drops")] = vals[12] * SAMPLING_FREQUENCY
+        d["net_dev_%s_%s" % (device, "tx_kbytes")] = vals[9] * sampling_frequency / 1000.0
+        d["net_dev_%s_%s" % (device, "tx_packets")] = vals[10] * sampling_frequency
+        d["net_dev_%s_%s" % (device, "tx_errs")] = vals[11] * sampling_frequency
+        d["net_dev_%s_%s" % (device, "tx_drops")] = vals[12] * sampling_frequency
 
     #print_dict(d)
     return d
@@ -334,15 +334,15 @@ def proc_diskstats():
                 disk_vals_old[idx][i] = a
                 vals[i] = delta
 
-            d["diskstats_%s_%s" % (device, "reads_completed_successfully")] = vals[3] * SAMPLING_FREQUENCY
-            d["diskstats_%s_%s" % (device, "reads_merged")] = vals[4] * SAMPLING_FREQUENCY
-            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[5] * SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "reads_completed_successfully")] = vals[3] * sampling_frequency
+            d["diskstats_%s_%s" % (device, "reads_merged")] = vals[4] * sampling_frequency
+            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[5] * sampling_frequency
             d["diskstats_%s_%s" % (device, "time_on_reading")] = vals[6] # ms
-            d["diskstats_%s_%s" % (device, "writes_completed")] = vals[7] * SAMPLING_FREQUENCY
-            d["diskstats_%s_%s" % (device, "writes_merged")] = vals[8] * SAMPLING_FREQUENCY
-            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[9] * SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "writes_completed")] = vals[7] * sampling_frequency
+            d["diskstats_%s_%s" % (device, "writes_merged")] = vals[8] * sampling_frequency
+            d["diskstats_%s_%s" % (device, "sectors_read")] = vals[9] * sampling_frequency
             d["diskstats_%s_%s" % (device, "time_on_writing")] = vals[10] # ms
-            d["diskstats_%s_%s" % (device, "io_progress")] = vals[11]* SAMPLING_FREQUENCY
+            d["diskstats_%s_%s" % (device, "io_progress")] = vals[11]* sampling_frequency
             d["diskstats_%s_%s" % (device, "time_on_io")] = vals[12] # ms
             d["diskstats_%s_%s" % (device, "weighted_time_on_io")] = vals[12] # ms
 
@@ -372,6 +372,8 @@ def format_stdout(d,keys):
             line += " %"
         elif "meminfo" in key:
             line += " MB"
+        elif "kbytes" in key:
+            line += " KB/s"
         line += "\n"
     return line
 
@@ -466,7 +468,6 @@ def sampling():
             "diskstats_sda_sectors_read",
             "diskstats_sda_time_on_reading",
             "diskstats_sda_writes_completed",
-            "diskstats_sda_writes_merged",
             "diskstats_sda_sectors_read",
             "diskstats_sda_time_on_writing",
             #"diskstats_sda_io_progress",
@@ -495,7 +496,7 @@ def main_stdout():
     init()
     while 1:
         sample = sampling()
-        time.sleep(SAMPLING_INTERVAL) # seconds
+        time.sleep(sampling_interval) # seconds
 
 
 def main_influxdb():
@@ -507,7 +508,7 @@ def main_influxdb():
         for i in range(0, 100):
             sample = sampling()
             samples.append(sample)
-            time.sleep(SAMPLING_INTERVAL) # seconds
+            time.sleep(sampling_interval) # seconds
 
         #print(samples)
         samples = "\n".join(samples)
@@ -537,10 +538,10 @@ if __name__ == "__main__":
     #    )
     args = parser.parse_args()
     output_format = args.mod
-    #global SAMPLING_FREQUENCY
+    #global sampling_frequency
     #global SAMPLING_INTERNAL
-    #SAMPLING_FREQUENCY = float(args.freq)
-    #SAMPLING_INTERNAL = 1 / SAMPLING_FREQUENCY
+    #sampling_frequency = float(args.freq)
+    #SAMPLING_INTERNAL = 1 / sampling_frequency
 
     if (len(sys.argv[1:]) == 0):
         output_format = "stdout"

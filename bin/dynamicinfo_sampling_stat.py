@@ -17,5 +17,5 @@ while 1:
     last_total = total
     utilisation = (1.0 - idle_delta / total_delta) * 100.0
 
-    print('%4.1f' % utilisation)
+    print('%5.2f' % utilisation)
     sleep(0.2)
