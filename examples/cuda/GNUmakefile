@@ -12,7 +12,7 @@ LINKFLAGS += -lyeahc -lrt
 
 
 #CXX = nvcc -O2
-CXX = g++ -std=c++14 -O2
+CXX = g++ -std=c++11 -O2
 #CXX = g++-4.9 -O2
 
 all: $(EXE)
@@ -23,7 +23,7 @@ all: $(EXE)
 nvmlinfo: nvmlinfo.cpp
 	$(CXX) $(HEADPATH) $(LIBPATH) $< -o $@ $(LINKFLAGS) -lnvidia-ml
 
-	
+
 echo:
 	@(echo $(HEADERS))
 	@(echo $(SRC))
