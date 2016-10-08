@@ -11,13 +11,13 @@ namespace measuring {
 namespace counting {
 
 class Timer {
-   protected:
+   public:
     double t1;  // start time
     double t2;  // stop time
     double ts;  // span, elapsed time
     int n;      // counter
 
-   public:
+
     Timer()
     {
         t1 = t2 = ts = 0;
