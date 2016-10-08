@@ -8,6 +8,7 @@
 #include <vector>
 
 
+namespace yeah {
 
 void print_vecstr(const std::vector<std::string> &lines)
 {
@@ -55,6 +56,7 @@ void save_vecstr_to_fn(const std::string fnpath,
     ofn.close();
 }
 
+}
 
 
 #endif

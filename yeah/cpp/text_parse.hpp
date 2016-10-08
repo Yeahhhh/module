@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+namespace yeah {
 
 static void trim(std::string &s)
 {
@@ -25,9 +26,11 @@ static void trim(std::string &s)
 
 void print_tokens_csv(std::vector<std::string> tokens)
 {
-    for (int i = 0; i < tokens.size() - 1; ++i)
-        std::cout << tokens[i] << ",";
-    std::cout << tokens[tokens.size() - 1] << std::endl;;
+    if (tokens.size() > 1) {
+        for (int i = 0; i < tokens.size() - 1; ++i)
+            std::cout << tokens[i] << ",";
+        std::cout << tokens[tokens.size() - 1] << std::endl;;
+    }
 }
 
 
@@ -51,7 +54,7 @@ std::vector<std::string> tokenlize(std::string &line, char delim)
     // std::cout << line << std::endl;
 
     while (getline(ss, t, delim)) {
-        trim(t);
+        yeah::trim(t);
         tokens.push_back(t);
     }
 
@@ -78,5 +81,6 @@ while (iss) {
 }
 */
 
+}
 
 #endif
