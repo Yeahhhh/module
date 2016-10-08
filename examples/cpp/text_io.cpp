@@ -17,12 +17,12 @@ main (int argc, char ** argv)
     std::string ofn = "/tmp/_tmp_out_xcsadfsdaf";
 
     std::vector<std::string> lines;
-    load_fn_to_vecstr(ifn, lines);
-    save_vecstr_to_fn(ofn, lines);
+    yeah::load_fn_to_vecstr(ifn, lines);
+    yeah::save_vecstr_to_fn(ofn, lines);
 
     lines.clear();
-    load_fn_to_vecstr(ofn, lines);
-    print_vecstr(lines);
+    yeah::load_fn_to_vecstr(ofn, lines);
+    yeah::print_vecstr(lines);
 
     return EXIT_SUCCESS;
 }

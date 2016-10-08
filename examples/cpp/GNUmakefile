@@ -3,10 +3,11 @@ SRC = $(wildcard *.cpp)
 OBJ = $(SRC:.cpp=.o)
 EXE = $(SRC:.cpp=)
 
-CXX = g++ -O2 -std=c++11
+CXX = clang++ -O2 -std=c++11
+#CXX = g++ -O2 -std=c++11
 
 
-LINKFLAGS += -lyeahc -lrt
+LINKFLAGS += -lyeahc -lyeahcxx -lrt
 
 
 all: $(EXE)

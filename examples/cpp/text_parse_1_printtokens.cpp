@@ -15,16 +15,12 @@ void func2(std::vector<std::string> lines)
 {
     const int n = lines.size();  // number of lines
     for (int i = 0; i < n; ++i) {
-        std::vector<std::string> tokens = tokenlize(lines[i], DELIM);
-
-        const int nn = tokens.size();
-        for (int i = 0; i < nn; ++i) {
-            std::cout << "token" << "\t" << i << "\t";
-            std::cout << tokens[i] << std::endl;
-        }
-        std::cout << std::endl;
+        std::vector<std::string> tokens = yeah::tokenlize(lines[i], DELIM);
+        yeah::print_tokens_csv(tokens);
+        yeah::print_tokens_table1(tokens);
     }
 }
+
 
 
 int main(int argc, char **argv)
@@ -35,7 +31,7 @@ int main(int argc, char **argv)
     }
 
     std::vector<std::string> lines;
-    load_fn_to_vecstr(argv[1], lines);
+    yeah::load_fn_to_vecstr(argv[1], lines);
     func2(lines);
 
     return EXIT_SUCCESS;

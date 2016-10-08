@@ -25,7 +25,7 @@ void func2(std::vector<std::string> lines)
         // if (line.substr (0, 3) == "KDE") ...
 
 
-        std::vector<std::string> tokens = tokenlize(line, ' ');
+        std::vector<std::string> tokens = yeah::tokenlize(line, ' ');
 
         if (tokens.size() <= 1)
             continue;
@@ -83,7 +83,7 @@ int main(int argc, char **argv)
     }
 
     std::vector<std::string> lines;
-    load_fn_to_vecstr(argv[1], lines);
+    yeah::load_fn_to_vecstr(argv[1], lines);
     func2(lines);
 
     return 0;
