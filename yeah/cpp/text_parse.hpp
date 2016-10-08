@@ -18,6 +18,27 @@ static void trim(std::string &s)
         s.erase(p + 1);
 }
 
+
+
+
+
+
+void print_tokens_csv(std::vector<std::string> tokens)
+{
+    for (int i = 0; i < tokens.size() - 1; ++i)
+        std::cout << tokens[i] << ",";
+    std::cout << tokens[tokens.size() - 1] << std::endl;;
+}
+
+
+void print_tokens_table1(std::vector<std::string> tokens)
+{
+    for (int i = 0; i < tokens.size(); ++i)
+        std::cout << i << "\t" << tokens[i] << std::endl;
+}
+
+
+
 // usage:
 // std::vector<std::string> tokens = tokenlize(lines, ',');
 // std::vector<std::string> tokens = tokenlize(lines, ' ');
@@ -27,7 +48,7 @@ std::vector<std::string> tokenlize(std::string &line, char delim)
     std::stringstream ss(line);
     std::string t;
 
-    // cout << line << endl;
+    // std::cout << line << std::endl;
 
     while (getline(ss, t, delim)) {
         trim(t);
