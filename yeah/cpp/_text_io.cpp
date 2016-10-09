@@ -19,6 +19,8 @@ main (int argc, char ** argv)
     std::vector<std::string> lines;
     yeah::load_fn_to_vecstr(ifn, lines);
     yeah::save_vecstr_to_fn(ofn, lines);
+    yeah::save_vecstr_to_fn_append(ofn, lines); // 2nd copy
+    yeah::save_vecstr_to_fn_append(ofn, lines); // 3rd copy
 
     lines.clear();
     yeah::load_fn_to_vecstr(ofn, lines);
