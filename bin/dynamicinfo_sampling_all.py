@@ -15,6 +15,13 @@
 # reference
 # http://www.brendangregg.com/USEmethod/use-linux.html
 #
+#
+# todo
+#     CPU IPC
+#     CPU L1 cache
+#     CPU LLC
+#     CPU br
+#
 
 
 
@@ -24,6 +31,7 @@ import argparse
 import os
 import sys
 import time
+import getpass
 
 import datetime
 import subprocess
@@ -38,11 +46,8 @@ MAX_NET_DEV = 16
 MAX_DISK_FIELDS = 16
 MAX_DISK_DEV = 64
 
-sampling_frequency = 10.0
-sampling_interval = 1 / sampling_frequency
 time_epoch = datetime.datetime.utcfromtimestamp(0)
 hostname = socket.gethostname()
-output_format = "stdout"  # stdout, influxdb
 cpu_vals_old = numpy.zeros((MAX_CPU_CORE, MAX_CPU_FIELDS))
 #cpu_names = []
 net_dev_vals_old = numpy.zeros((MAX_NET_DEV, MAX_NET_FIELDS))
@@ -361,13 +366,11 @@ def init():
 
 
 
-
 def format_stdout(d,keys):
     t = generate_timetag()
-    line = "%.3f\n" % t
-    line += "%s\n" % epoch_to_myformat(t)
+    line = "%.3f, %s\n" % (t, epoch_to_myformat(t))
     for key in keys:
-        line += "%50s\t\t%13.3f" % (key, d[key])
+        line += "%-40s\t\t%13.3f" % (key, d[key])
         if "percent" in key:
             line += " %"
         elif "meminfo" in key:
@@ -398,24 +401,16 @@ def my_print(d, keys):
 
 
 def send_sample_to_influxdb(d, keys):
-    host="us-aus-stormon1.austin.arm.com"
-    port="8086"
-    db_name="yeah"
-
     line = format_influxdb(d,keys)
     cmd = "curl -i -XPOST 'http://%s:%s/write?db=%s' --data-binary '%s'" \
-            % (host, port, db_name, line)
+            % (influxdb_host, influxdb_port, influxdb_db_name, line)
     #print(cmd)
     os.system(cmd)
 
 
 def send_file_to_influxdb(fn):
-    host="us-aus-stormon1.austin.arm.com"
-    port="8086"
-    db_name="yeah"
-
     cmd = "curl -i -XPOST 'http://%s:%s/write?db=%s' --data-binary @%s" \
-            % (host, port, db_name, fn)
+            % (influxdb_host, influxdb_port, influxdb_db_name, fn)
     #print(cmd)
     os.system(cmd)
 
@@ -434,7 +429,8 @@ def sampling():
             d_vmstat.items() | \
             d_net_dev.items() | \
             d_diskstats.items() | \
-            d_dummy.items())
+            d_dummy.items()
+            )
 
     keys = ["stat_cpu_percent_user",
             "stat_cpu_percent_nice",
@@ -463,19 +459,20 @@ def sampling():
             "meminfo_percent_Cached",
             "meminfo_percent_Buffers",
 
-            "diskstats_sda_reads_completed_successfully",
-            "diskstats_sda_reads_merged",
-            "diskstats_sda_sectors_read",
-            "diskstats_sda_time_on_reading",
-            "diskstats_sda_writes_completed",
-            "diskstats_sda_sectors_read",
-            "diskstats_sda_time_on_writing",
-            #"diskstats_sda_io_progress",
-            "diskstats_sda_time_on_io",
-            "diskstats_sda_weighted_time_on_io",
-
             "dummy"
             ]
+
+    for diskstats_name in ["sda"]:
+        keys.append("diskstats_%s_reads_completed_successfully" % diskstats_name)
+        keys.append("diskstats_%s_reads_merged" % diskstats_name)
+        keys.append("diskstats_%s_sectors_read" % diskstats_name)
+        keys.append("diskstats_%s_time_on_reading" % diskstats_name)
+        keys.append("diskstats_%s_writes_completed" % diskstats_name)
+        keys.append("diskstats_%s_sectors_read" % diskstats_name)
+        keys.append("diskstats_%s_time_on_writing" % diskstats_name)
+        #keys.append("diskstats_%s_io_progress" % diskstats_name)
+        keys.append("diskstats_%s_time_on_io" % diskstats_name)
+        keys.append("diskstats_%s_weighted_time_on_io" % diskstats_name)
 
     #for net_dev_name in ["lo", "eth0"]:
     for net_dev_name in net_dev_names:
@@ -503,11 +500,14 @@ def main_stdout():
 
 def main_influxdb():
     init()
-    out_fn = "/tmp/a.py.influxdb_request"
+    out_fn = "/tmp/" + \
+            "dynamicinfo_sampling_all.py_" + \
+            getpass.getuser() + \
+            "influxdb_request"
 
     while 1:
         samples = []
-        for i in range(0, 100):
+        for i in range(0, n_sampling_every_influxdb_msg):
             sample = sampling()
             samples.append(sample)
             time.sleep(sampling_interval) # seconds
@@ -517,6 +517,35 @@ def main_influxdb():
         with open(out_fn, "w") as f:
             f.write(samples)
         send_file_to_influxdb(out_fn)
+
+
+
+def main(args):
+    global sampling_frequency
+    global sampling_interval
+    global n_sampling_every_influxdb_msg
+    global output_format
+    output_format = args.mod
+    sampling_frequency = float(args.freq)
+    sampling_interval = 1 / sampling_frequency
+    n_sampling_every_influxdb_msg = int(args.ndump)
+
+    global influxdb_host
+    global influxdb_port
+    global influxdb_db_name
+    influxdb_host="us-aus-stormon1.austin.arm.com"
+    influxdb_port="8086"
+    influxdb_db_name="yeah"
+
+
+    if (output_format == "stdout"):
+        main_stdout()
+    elif (output_format == "influxdb"):
+        main_influxdb()
+    else:
+        printf("invalid output_format, quit\n")
+        sys.exit()
+
 
 
 
@@ -531,31 +560,25 @@ if __name__ == "__main__":
         type = str,
         help = "stdout / influxdb"
         )
-    #parser.add_argument(
-    #    "-f",
-    #    "--freq",
-    #    default = "2",
-    #    type = int,
-    #    help = "sampling frequency"
-    #    )
+    parser.add_argument(
+        "-f",
+        "--freq",
+        default = "2",
+        type = str,
+        help = "sampling frequency"
+        )
+    parser.add_argument(
+        "-n",
+        "--ndump",
+        default = "600",
+        type = str,
+        help = "number of samples for each influxdb message"
+        )
     args = parser.parse_args()
-    output_format = args.mod
-    #global sampling_frequency
-    #global SAMPLING_INTERNAL
-    #sampling_frequency = float(args.freq)
-    #SAMPLING_INTERNAL = 1 / sampling_frequency
+    main(args)
 
-    if (len(sys.argv[1:]) == 0):
-        output_format = "stdout"
-        main_stdout()
-    else:
-        if (output_format == "stdout"):
-            main_stdout()
-        elif (output_format == "influxdb"):
-            main_influxdb()
-        else:
-            parser.print_help()
-            parser.exit()
-
-
+    #if (len(sys.argv[1:]) == 0):
+    #    printf("no args\n")
+    #    parser.print_help()
+    #    parser.exit()
 
