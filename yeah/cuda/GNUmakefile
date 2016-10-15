@@ -6,7 +6,7 @@ EXE = $(SRC:.cpp=)
 
 LINKFLAGS += -lcudart
 #LINKFLAGS += -lcudart_static
-#LINKFLAGS += -lnvidia-ml
+LINKFLAGS += -lnvidia-ml
 LINKFLAGS += -lpthread
 LINKFLAGS += -lyeahc -lrt
 

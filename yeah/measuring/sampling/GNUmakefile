@@ -14,7 +14,7 @@ all: $(EXE)
 % : %.cpp
 	$(CXX) $(HEADPATH) $(LIBPATH) $< -o $@ $(LINKFLAGS)
 
-nvml: nvml.cpp
+_nvml: _nvml.cpp
 	$(CXX) $(HEADPATH) $(LIBPATH) $< -o $@ $(LINKFLAGS) -lcudart -lnvidia-ml
 
 

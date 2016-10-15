@@ -23,10 +23,11 @@ std::string sprint_tokens_csv(std::vector<std::string> tokens)
 {
     std::stringstream buffer;
 
-    if (tokens.size() <= 1) {
-        for (int i = 0; i < tokens.size() - 1; ++i)
-            buffer << tokens[i];
-        buffer << std::endl;;
+    if (tokens.size() == 0) {
+        buffer << "" << std::endl;;
+    }
+    if (tokens.size() == 1) {
+        buffer << tokens[0] << std::endl;;
     }
     else if (tokens.size() > 1) {
         for (int i = 0; i < tokens.size() - 1; ++i)

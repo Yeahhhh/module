@@ -61,6 +61,7 @@ MatchCudaNvmlDevices (const cudaDeviceProp * const cuda_device_prop,
 
 
 /*
+ * reference:
  * https://github.com/al42and/cuda-smi
  *
  * For a number of reasons nVidia uses different device enumeration
